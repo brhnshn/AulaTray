@@ -29,17 +29,7 @@
 
 ### Overview
 
-The official AULA configuration software does not show battery percentage in the Windows taskbar (`ShowPower=0` in default configuration), consumes over 100 MB of RAM, and requires keeping a background window open.
-
-**AulaTray** is an independent, lightweight Windows utility that communicates directly with the AULA F75 keyboard hardware over USB HID and Bluetooth Low Energy. It displays your real-time battery percentage directly in the system tray with minimal resource usage.
-
-| Feature | Official AULA App | AulaTray |
-| :--- | :---: | :---: |
-| Taskbar Tray Percentage | Hidden (`ShowPower=0`) | Real-time (0% – 100%) |
-| RAM Footprint | ~100+ MB | ~15 MB |
-| Connection Modes | Manual / Inconsistent | Auto-detects 2.4G / BT / USB |
-| Background Service | Heavy window/process | Silent system tray icon |
-| User Interface | Clunky application window | Windows 11 Fluent flyout card |
+**AulaTray** is an independent, lightweight Windows system tray utility for the **AULA F75** wireless mechanical keyboard. It communicates directly with the keyboard hardware over native USB HID and Bluetooth Low Energy, displaying real-time battery percentage and charging status with a minimal ~15 MB RAM footprint.
 
 ---
 
@@ -80,9 +70,7 @@ dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile
 
 ### Genel Bakış
 
-AULA F75 klavyenin resmi yazılımı Windows görev çubuğunda pil yüzdesini göstermemekte (`ShowPower=0`), arka planda 100 MB'tan fazla RAM tüketmekte ve çalışması için bir pencerenin açık kalmasını gerektirmektedir.
-
-**AulaTray**, resmi yazılıma ihtiyaç duymadan doğrudan klavye donanımıyla haberleşen, sistem tepsisinde (sağ altta) gerçek zamanlı pil seviyesini gösteren, **yaklaşık 15 MB RAM** tüketen hafif ve modern bir açık kaynak araçtır.
+**AulaTray**, **AULA F75** kablosuz mekanik klavye için geliştirilmiş bağımsız ve hafif bir Windows sistem tepsisi pil monitörüdür. Klavye donanımıyla doğrudan USB HID ve Bluetooth Low Energy üzerinden haberleşerek gerçek zamanlı pil yüzdesini ve şarj durumunu yaklaşık 15 MB RAM kullanımıyla arka planda sessizce gösterir.
 
 ### Öne Çıkan Özellikler
 
