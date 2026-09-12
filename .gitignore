@@ -1,0 +1,30 @@
+﻿## .NET & Build Output
+bin/
+obj/
+dist/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+
+## Visual Studio & IDEs
+.vs/
+.vscode/
+.idea/
+*.sln.docstates
+
+## Temporary / Reverse-Engineering Scripts
+research/
+scratch/
+diag.cs
+live_dongle_inspect.py
+scan_wired.py
+test_*.py
+test_*.cs
+
+## OS & System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.BIN/
+.DS_Store
