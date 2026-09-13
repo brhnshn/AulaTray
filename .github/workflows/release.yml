@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -31,7 +32,8 @@ jobs:
     - name: Prepare Release Package
       shell: pwsh
       run: |
-        $tag = "${{ github.ref_name }}"
+        $ref = "${{ github.ref_name }}"
+        $tag = if ($ref.StartsWith("v")) { $ref } else { "v1.1.0" }
         $zipName = "AulaTray-$tag-win-x64.zip"
         
         # models.json'u artifacts içine kopyala
@@ -46,6 +48,7 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
+        tag_name: ${{ startsWith(github.ref_name, 'v') && github.ref_name || 'v1.1.0' }}
         files: |
           AulaTray-*.zip
           ./artifacts/AulaTray.exe
