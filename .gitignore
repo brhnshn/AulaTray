@@ -1,30 +1,50 @@
-﻿## .NET & Build Output
-bin/
-obj/
-dist/
+## =====================================
+## .NET & Build Output
+## =====================================
+**/[Bb]in/
+**/[Oo]bj/
+**/[Dd]ist/
+**/TestResults/
+**/artifacts/
+[Bb]uildLog.*
+*.manifest
+
+## =====================================
+## Visual Studio & IDEs
+## =====================================
+.vs/
+.vscode/
+.idea/
 *.user
 *.userosscache
 *.suo
 *.userprefs
-
-## Visual Studio & IDEs
-.vs/
-.vscode/
-.idea/
 *.sln.docstates
+*.DotSettings.user
 
-## Temporary / Reverse-Engineering Scripts
+## =====================================
+## Logs & Diagnostics
+## =====================================
+*.log
+crash.log
+debug.log
+
+## =====================================
+## Reverse-Engineering & Scratch Files
+## =====================================
 research/
 scratch/
 diag.cs
-live_dongle_inspect.py
-scan_wired.py
-test_*.py
 test_*.cs
+test_*.py
+*.py
 
-## OS & System Files
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-.BIN/
+## =====================================
+## OS & Temporary Files
+## =====================================
+[Tt]humbs.db
+[Ee]hthumbs.db
+[Dd]esktop.ini
 .DS_Store
+*.tmp
+*.bak

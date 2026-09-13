@@ -1,0 +1,29 @@
+name: CI (Build & Test)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore AulaTray/AulaTray.csproj
+
+    - name: Build Application
+      run: dotnet build AulaTray/AulaTray.csproj --configuration Release --no-restore
+
+    - name: Run Unit Tests
+      run: dotnet test tests/AulaTray.Tests/AulaTray.Tests.csproj --configuration Release --verbosity normal

@@ -7,26 +7,27 @@ namespace AulaTray;
 public class TrayApplicationContext : ApplicationContext
 {
     private readonly NotifyIcon _notifyIcon;
-    private readonly System.Windows.Forms.Timer _pollingTimer;
-    private readonly HidService _hidService;
+    private readonly KeyboardMonitor _keyboardMonitor;
+    private readonly System.Threading.SynchronizationContext? _syncContext;
+    private readonly ToolStripMenuItem _showWindowItem;
     private readonly ToolStripMenuItem _statusMenuItem;
     private readonly ToolStripMenuItem _autoStartMenuItem;
     private bool _lowBatteryWarned = false;
-    private Icon? _currentIcon = null;
     private StatusForm? _currentStatusForm = null;
-    private KeyboardStatus _latestStatus = new KeyboardStatus(0, PowerState.Discharging, ConnectionState.Disconnected, ConnectionMode.Disconnected);
+    private KeyboardStatus _latestStatus = new(0, PowerState.Discharging, ConnectionState.Disconnected, ConnectionMode.Disconnected);
 
     public TrayApplicationContext()
     {
-        _hidService = new HidService();
+        _syncContext = System.Threading.SynchronizationContext.Current ?? new WindowsFormsSynchronizationContext();
+        _keyboardMonitor = new KeyboardMonitor();
 
         ContextMenuStrip contextMenu = new ContextMenuStrip();
         
-        ToolStripMenuItem showWindowItem = new ToolStripMenuItem("Aula F75 Durumu...", null, (_, _) => ShowStatusWindow())
+        _showWindowItem = new ToolStripMenuItem("Aula Klavye Durumu...", null, (_, _) => ShowStatusWindow())
         {
             Font = new Font("Segoe UI", 9f, FontStyle.Bold)
         };
-        contextMenu.Items.Add(showWindowItem);
+        contextMenu.Items.Add(_showWindowItem);
 
         _statusMenuItem = new ToolStripMenuItem("Algılanıyor...") { Enabled = false };
         contextMenu.Items.Add(_statusMenuItem);
@@ -35,6 +36,7 @@ public class TrayApplicationContext : ApplicationContext
         ToolStripMenuItem refreshItem = new ToolStripMenuItem("Şimdi Yenile", null, (_, _) => RefreshStatus());
         contextMenu.Items.Add(refreshItem);
 
+        AutoStartService.MigrateLegacyRunKeyIfPresent();
         bool autoStartEnabled = AutoStartService.IsAutoStartEnabled();
         _autoStartMenuItem = new ToolStripMenuItem("Windows ile Başlat", null, OnAutoStartToggle)
         {
@@ -57,7 +59,7 @@ public class TrayApplicationContext : ApplicationContext
         {
             ContextMenuStrip = contextMenu,
             Visible = true,
-            Text = "Aula F75 Pil Monitörü"
+            Text = "Aula Klavye Pil Monitörü"
         };
         
         _notifyIcon.MouseClick += (s, e) =>
@@ -69,14 +71,17 @@ public class TrayApplicationContext : ApplicationContext
         };
         _notifyIcon.DoubleClick += (_, _) => ShowStatusWindow();
 
-        _pollingTimer = new System.Windows.Forms.Timer
+        _keyboardMonitor.StatusChanged += status =>
         {
-            Interval = 15000 // 15 saniyede bir yokla
+            if (_syncContext != null)
+                _syncContext.Post(_ => UpdateUI(status), null);
+            else
+                UpdateUI(status);
         };
-        _pollingTimer.Tick += (_, _) => RefreshStatus();
-        _pollingTimer.Start();
+        _keyboardMonitor.Start();
 
-        RefreshStatus();
+        // Başlangıç JIT ve CLR yükünden sonra RAM kullanımını 70MB'tan 10-15MB'a daralt
+        System.Threading.Tasks.Task.Delay(2500).ContinueWith(_ => MemoryOptimizer.TrimWorkingSet());
     }
 
     private void ShowStatusWindow()
@@ -88,7 +93,7 @@ public class TrayApplicationContext : ApplicationContext
             return;
         }
 
-        _latestStatus = _hidService.QueryStatus();
+        _latestStatus = _keyboardMonitor.LatestStatus;
         _currentStatusForm = new StatusForm(_latestStatus);
         _currentStatusForm.FormClosed += (_, _) => _currentStatusForm = null;
         _currentStatusForm.Show();
@@ -96,27 +101,26 @@ public class TrayApplicationContext : ApplicationContext
 
     private void RefreshStatus()
     {
-        _latestStatus = _hidService.QueryStatus();
-        UpdateUI(_latestStatus);
+        _keyboardMonitor.QueryNow();
     }
 
     private void UpdateUI(KeyboardStatus status)
     {
-        Icon newIcon = IconRenderer.CreateBatteryIcon(status);
-        Icon? oldIcon = _currentIcon;
-        _currentIcon = newIcon;
-        _notifyIcon.Icon = newIcon;
+        _currentStatusForm?.UpdateStatus(status);
 
-        if (oldIcon != null)
+        Icon targetIcon = IconRenderer.GetTrayIcon(status);
+        if (_notifyIcon.Icon != targetIcon)
         {
-            DestroyIcon(oldIcon.Handle);
-            oldIcon.Dispose();
+            _notifyIcon.Icon = targetIcon;
         }
+
+        string modelName = !string.IsNullOrWhiteSpace(status.ModelName) ? status.ModelName : "Aula Klavye";
+        _showWindowItem.Text = $"{modelName} Durumu...";
 
         string statusText;
         if (status.ConnectionState == ConnectionState.Disconnected)
         {
-            statusText = "Aula F75: Bağlantı Yok";
+            statusText = $"{modelName}: Bağlantı Yok";
             _statusMenuItem.Text = statusText;
             _notifyIcon.Text = TruncateTooltip(statusText);
             return;
@@ -124,7 +128,7 @@ public class TrayApplicationContext : ApplicationContext
 
         if (status.ConnectionState == ConnectionState.Sleeping)
         {
-            statusText = "Aula F75: Uykuda";
+            statusText = $"{modelName}: %{status.BatteryPercent} (Uykuda)";
             _statusMenuItem.Text = statusText;
             _notifyIcon.Text = TruncateTooltip(statusText);
             return;
@@ -139,7 +143,7 @@ public class TrayApplicationContext : ApplicationContext
         };
 
         string powerText = status.PowerState == PowerState.Charging ? "Şarj Oluyor" : "Pilde";
-        statusText = $"Aula F75: %{status.BatteryPercent} ({modeShort} - {powerText})";
+        statusText = $"{modelName}: %{status.BatteryPercent} ({modeShort} - {powerText})";
         
         _statusMenuItem.Text = statusText;
         _notifyIcon.Text = TruncateTooltip(statusText);
@@ -150,7 +154,7 @@ public class TrayApplicationContext : ApplicationContext
             {
                 _notifyIcon.ShowBalloonTip(
                     3000,
-                    "Aula F75 Pil Uyarısı",
+                    $"{modelName} Pil Uyarısı",
                     $"Pil seviyesi %{status.BatteryPercent}. Lütfen klavyenizi şarja takın.",
                     ToolTipIcon.Warning
                 );
@@ -177,19 +181,11 @@ public class TrayApplicationContext : ApplicationContext
 
     private void ExitApp()
     {
-        _pollingTimer.Stop();
-        _pollingTimer.Dispose();
+        _keyboardMonitor.Dispose();
         _notifyIcon.Visible = false;
         _notifyIcon.Dispose();
         _currentStatusForm?.Close();
-        if (_currentIcon != null)
-        {
-            DestroyIcon(_currentIcon.Handle);
-            _currentIcon.Dispose();
-        }
+        IconRenderer.CleanUp();
         ExitThread();
     }
-
-    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
-    private static extern bool DestroyIcon(IntPtr handle);
 }

@@ -12,7 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="aulatray_badge.png" />
+    <EmbeddedResource Include="AulaLogo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="models.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

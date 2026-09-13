@@ -1,0 +1,34 @@
+[
+  {
+    "modelName": "Aula F75",
+    "dongleVid": "0x3554",
+    "donglePids": ["0xFA09"],
+    "wiredVid": "0x258A",
+    "wiredPids": ["0x010C"],
+    "btKeywords": ["F75", "AULA F75", "AULA-F75"]
+  },
+  {
+    "modelName": "Aula F87",
+    "dongleVid": "0x3554",
+    "donglePids": ["0xFA0A", "0xFA10"],
+    "wiredVid": "0x258A",
+    "wiredPids": ["0x010D"],
+    "btKeywords": ["F87", "AULA F87", "AULA-F87"]
+  },
+  {
+    "modelName": "Aula F99",
+    "dongleVid": "0x3554",
+    "donglePids": ["0xFA11"],
+    "wiredVid": "0x258A",
+    "wiredPids": ["0x010E"],
+    "btKeywords": ["F99", "AULA F99", "AULA-F99"]
+  },
+  {
+    "modelName": "Aula F68",
+    "dongleVid": "0x3554",
+    "donglePids": ["0xFA08"],
+    "wiredVid": "0x258A",
+    "wiredPids": ["0x010B"],
+    "btKeywords": ["F68", "AULA F68", "AULA-F68"]
+  }
+]

@@ -1,0 +1,54 @@
+name: Release (Publish & Package)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Run Unit Tests
+      run: dotnet test tests/AulaTray.Tests/AulaTray.Tests.csproj --configuration Release
+
+    - name: Publish Executable
+      run: |
+        dotnet publish AulaTray/AulaTray.csproj -c Release -r win-x64 -o ./artifacts --self-contained false
+
+    - name: Prepare Release Package
+      shell: pwsh
+      run: |
+        $tag = "${{ github.ref_name }}"
+        $zipName = "AulaTray-$tag-win-x64.zip"
+        
+        # models.json'u artifacts içine kopyala
+        Copy-Item -Path "AulaTray/models.json" -Destination "./artifacts/models.json" -Force
+        Copy-Item -Path "README.md" -Destination "./artifacts/README.md" -Force
+        Copy-Item -Path "LICENSE" -Destination "./artifacts/LICENSE" -Force
+
+        # Zip arşivi oluştur
+        Compress-Archive -Path "./artifacts/*" -DestinationPath "./$zipName"
+        Write-Output "Created: $zipName"
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          AulaTray-*.zip
+          ./artifacts/AulaTray.exe
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

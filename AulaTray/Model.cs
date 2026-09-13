@@ -1,4 +1,4 @@
-﻿namespace AulaTray;
+namespace AulaTray;
 
 public enum PowerState
 {
@@ -25,5 +25,6 @@ public record KeyboardStatus(
     int BatteryPercent,
     PowerState PowerState,
     ConnectionState ConnectionState,
-    ConnectionMode Mode = ConnectionMode.Disconnected
+    ConnectionMode Mode = ConnectionMode.Disconnected,
+    string ModelName = "Aula F75"
 );
